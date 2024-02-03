@@ -1,11 +1,11 @@
 import base64
 import re
 
+from django.db.models import F
 from django.core.files.base import ContentFile
 from djoser.serializers import UserCreateSerializer, UserSerializer
 from rest_framework import serializers
 from rest_framework.fields import SerializerMethodField
-
 from recipes.models import Ingredient, Recipe, Tag
 from users.models import Follow, User
 
@@ -40,7 +40,7 @@ class TagSerializer(serializers.ModelSerializer):
         if not re.match(r'^#(?:[0-9a-fA-F]{3}){1,2}$', value):
             raise serializers.ValidationError(
                 "Цвет должен быть в формате HEX."
-                )
+            )
         return value
 
 

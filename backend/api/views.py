@@ -8,11 +8,11 @@ from djoser.views import UserViewSet
 from rest_framework import permissions, status, viewsets
 from rest_framework.decorators import action
 from rest_framework.response import Response
-
 from recipes.models import (
     Favorite, Ingredient, Recipe, RecipeIngredient, ShoppingCart, Tag)
 from api.serializers import (
-    IngredientSerializer, RecipeSerializer, RecipeGetSerializer, TagSerializer, UserSerializer, MiniRecipeSerializer, FollowSerializer)
+    IngredientSerializer, RecipeSerializer, RecipeGetSerializer,
+    TagSerializer, UserSerializer, MiniRecipeSerializer, FollowSerializer)
 from users.models import Follow, User
 from .filters import IngredientSearchFilter, RecipeFilter
 from .pagination import FoodgramPagination
@@ -43,28 +43,24 @@ class RecipeViewSet(viewsets.ModelViewSet):
             return RecipeGetSerializer
         return RecipeSerializer
 
-    @action(
-            detail=True,
+    @action(detail=True,
             methods=('post',),
             permission_classes=(permissions.IsAuthenticated,))
     def favorite(self, request, pk):
         return self.modify_membership(Favorite, request.user, pk, True)
 
-    @action(
-            detail=True,
+    @action(detail=True,
             methods=('delete',),
             permission_classes=(permissions.IsAuthenticated,))
     def remove_favorite(self, request, pk):
         return self.modify_membership(Favorite, request.user, pk, False)
 
-    @action(
-            detail=True, methods=('post',),
+    @action(detail=True, methods=('post',),
             permission_classes=(permissions.IsAuthenticated,))
     def shopping_cart(self, request, pk):
         return self.modify_membership(ShoppingCart, request.user, pk, True)
 
-    @action(
-            detail=True, methods=('delete',),
+    @action(detail=True, methods=('delete',),
             permission_classes=(permissions.IsAuthenticated,))
     def remove_shopping_cart(self, request, pk):
         return self.modify_membership(ShoppingCart, request.user, pk, False)
@@ -124,8 +120,7 @@ class UserViewSet(UserViewSet):
     serializer_class = UserSerializer
     pagination_class = FoodgramPagination
 
-    @action(
-            detail=True,
+    @action(detail=True,
             methods=['post', 'delete'],
             permission_classes=(permissions.IsAuthenticated,))
     def subscribe(self, request, id):

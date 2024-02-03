@@ -1,7 +1,6 @@
 from django.core.validators import MinValueValidator
 from django.db import models
 from django.db.models import UniqueConstraint
-
 from users.models import User
 
 MAX_LENGTH = 200
@@ -56,8 +55,7 @@ class Recipe(models.Model):
     )
     image = models.ImageField(
         verbose_name='Картинка',
-        upload_to='recipes/images/',
-        )
+        upload_to='recipes/images/',)
     text = models.TextField(
         verbose_name='Описание',
     )
