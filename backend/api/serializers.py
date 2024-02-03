@@ -1,12 +1,12 @@
 import base64
 import re
 
-from django.db.models import F
 from django.core.files.base import ContentFile
+from django.db.models import F
 from djoser.serializers import UserCreateSerializer, UserSerializer
+from recipes.models import Ingredient, Recipe, Tag
 from rest_framework import serializers
 from rest_framework.fields import SerializerMethodField
-from recipes.models import Ingredient, Recipe, Tag
 from users.models import Follow, User
 
 
