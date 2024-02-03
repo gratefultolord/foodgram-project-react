@@ -1,4 +1,7 @@
+from typing import Any
 from django.contrib import admin
+from django.db.models.query import QuerySet
+from django.http.request import HttpRequest
 
 from .models import (Favorite, Ingredient, RecipeIngredient,
                      Recipe, ShoppingCart, Tag)
@@ -13,7 +16,12 @@ class RecipeAdmin(admin.ModelAdmin):
         'author',
     )
     list_filter = ('author', 'name', 'tags',)
+    search_fields = ('name', 'author__username',)
     empty_value_display = '-пусто-'
+
+    def get_queryset(self, request):
+        queryset = super().get_queryset(request)
+        return queryset.select_related('author').prefetch_related('tags')
 
 
 @admin.register(Ingredient)
@@ -25,6 +33,7 @@ class IngredientAdmin(admin.ModelAdmin):
         'measurement_unit',
     )
     list_filter = ('name',)
+    search_fields = ('name',)
     empty_value_display = '-пусто-'
 
 

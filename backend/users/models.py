@@ -8,6 +8,8 @@ MAX_FIELD_LENGTH = 150
 class User(AbstractUser):
     """Модель пользователя."""
 
+    USERNAME_FIELD = 'email'
+    REQUIRED_FIELDS = ('username', 'first_name', 'last_name',)
     email = models.EmailField(
         verbose_name='Адрес электронной почты',
         unique=True,
@@ -30,6 +32,9 @@ class User(AbstractUser):
     class Meta:
         verbose_name = 'Пользователь'
         verbose_name_plural = 'пользователи'
+
+    def __str__(self):
+        return self.username
 
 
 class Follow(models.Model):

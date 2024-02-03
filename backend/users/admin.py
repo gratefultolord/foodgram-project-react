@@ -15,6 +15,7 @@ class UserAdmin(UserAdmin):
         'last_name',
     )
     list_filter = ('email', 'username')
+    search_fields = ('username', 'email', 'first_name', 'last_name',)
     empty_value_display = '-пусто-'
 
 
@@ -23,4 +24,6 @@ class FollowAdmin(admin.ModelAdmin):
     """Административный класс для управления подписками."""
 
     list_display = ('user', 'following',)
+    list_filter = ('user', 'following',)
+    search_fields = ('user__username', 'following__username',)
     empty_value_display = '-пусто-'

@@ -2,7 +2,9 @@ import base64
 import re
 
 from django.core.files.base import ContentFile
+from djoser.serializers import UserCreateSerializer, UserSerializer
 from rest_framework import serializers
+from rest_framework.fields import SerializerMethodField
 
 from recipes.models import Ingredient, Recipe, Tag
 from users.models import Follow, User
@@ -42,12 +44,21 @@ class TagSerializer(serializers.ModelSerializer):
         return value
 
 
-class UserSerializer(serializers.ModelSerializer):
+class UserSerializer(UserSerializer):
     """Сериализатор пользователей."""
+
+    is_subscribed = SerializerMethodField(read_only=True)
 
     class Meta:
         model = User
-        fields = '__all__'
+        fields = ('id', 'email', 'username', 'first_name',
+                  'last_name', 'is_subscribed',)
+
+    def get_is_subscribed(self, obj):
+        request = self.context.get('request')
+        if self.context.get('request').user.is_anonymous:
+            return False
+        return obj.following.filter(user=request.user).exists()
 
 
 class MiniRecipeSerializer(serializers.ModelSerializer):
@@ -64,7 +75,7 @@ class MiniRecipeSerializer(serializers.ModelSerializer):
         )
 
 
-class FollowSerializer(serializers.ModelSerializer):
+class FollowSerializer(UserSerializer):
     """Сериализатор подписок."""
     id = serializers.IntegerField(source='following.id')
     email = serializers.EmailField(source='following.email')
@@ -73,13 +84,16 @@ class FollowSerializer(serializers.ModelSerializer):
     last_name = serializers.CharField(source='following.last_name')
     recipes = serializers.SerializerMethodField()
     is_subscribed = serializers.BooleanField(read_only=True)
-    recipes_count = serializers.IntegerField(read_only=True)
+    recipes_count = SerializerMethodField()
 
     class Meta:
         model = Follow
         fields = (
             'email', 'id', 'username', 'first_name', 'last_name',
             'is_subscribed', 'recipes', 'recipes_count',)
+
+    def get_recipes_count(self, obj):
+        return obj.recipes.count()
 
     def get_recipes(self, obj):
         request = self.context.get('request')
@@ -92,25 +106,12 @@ class FollowSerializer(serializers.ModelSerializer):
             many=True).data
 
 
-class UserRegistrationSerializer(serializers.ModelSerializer):
+class UserRegistrationSerializer(UserCreateSerializer):
     """Сериализатор регистрации пользователей."""
+
     class Meta:
         model = User
         fields = ('email', 'username', 'first_name', 'last_name', 'password')
-        extra_kwargs = {
-            'password': {'write_only': True}
-        }
-
-    def create(self, validated_data):
-        user = User(
-            email=validated_data['email'],
-            username=validated_data['username'],
-            first_name=validated_data['first_name'],
-            last_name=validated_data['last_name']
-        )
-        user.set_password(validated_data['password'])
-        user.save()
-        return user
 
 
 class RecipeSerializer(serializers.ModelSerializer):
