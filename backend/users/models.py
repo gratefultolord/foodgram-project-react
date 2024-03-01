@@ -37,7 +37,7 @@ class User(AbstractUser):
         return self.username
 
 
-class Follow(models.Model):
+class Subscription(models.Model):
     """Модель подписок."""
 
     user = models.ForeignKey(User, on_delete=models.CASCADE,
@@ -50,11 +50,7 @@ class Follow(models.Model):
     class Meta:
         constraints = (
             models.UniqueConstraint(
-                name='unique_follow',
+                name='unique_subscription',
                 fields=('user', 'following')
-            ),
-            models.CheckConstraint(
-                check=models.Q(user=models.F('following')),
-                name='do_not_follow_yourself'
             ),
         )

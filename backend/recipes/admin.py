@@ -58,7 +58,7 @@ class FavoriteAdmin(admin.ModelAdmin):
 class RecipeIngredientAdmin(admin.ModelAdmin):
     """Административный класс для управления ингредиентов в рецептах."""
 
-    list_display = ('recipe', 'ingredient', 'quantity',)
+    list_display = ('recipe', 'ingredients', 'amount',)
     empty_value_display = '-пусто-'
 
 

@@ -41,10 +41,12 @@ class RecipeFilter(FilterSet):
         Применяется только если `value` истинно
         и пользователь аутентифицирован.
         """
-        if self.request and self.request.user.is_authenticated:
-            if value:
-                return queryset.filter(favorites__user=self.request.user)
-        return queryset
+        if not self.request.user.is_authenticated:
+            return queryset
+        if value:
+            return queryset.filter(favorites__user=self.request.user)
+        else:
+            return queryset
 
     def filter_is_in_shopping_cart(self, queryset, name, value):
         """
@@ -53,7 +55,9 @@ class RecipeFilter(FilterSet):
         Применяется только если `value` истинно
         и пользователь аутентифицирован.
         """
-        if self.request and self.request.user.is_authenticated:
-            if value:
-                return queryset.filter(shopping_cart__user=self.request.user)
-        return queryset
+        if not self.request.user.is_authenticated:
+            return queryset
+        if value:
+            return queryset.filter(shopping_cart__user=self.request.user)
+        else:
+            return queryset

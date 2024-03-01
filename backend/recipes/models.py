@@ -10,13 +10,18 @@ class Tag(models.Model):
     name = models.CharField(
         verbose_name='Название',
         max_length=MAX_LENGTH,
+        unique=True,
     )
     color = models.CharField(
         verbose_name='Цвет',
         max_length=MAX_LENGTH,
+        unique=True,
+        db_index=False,
     )
     slug = models.SlugField(
         verbose_name='Слаг',
+        unique=True,
+        db_index=False,
     )
 
     class Meta:
@@ -25,7 +30,7 @@ class Tag(models.Model):
         verbose_name_plural = 'теги'
 
     def __str__(self):
-        return self.name
+        return f'{self.name} (цвет: {self.color})'
 
 
 class Ingredient(models.Model):
@@ -66,7 +71,7 @@ class Recipe(models.Model):
                 1, message='Минимальное время приготовления - 1 минута!'),
         ),
     )
-    ingredient = models.ManyToManyField(
+    ingredients = models.ManyToManyField(
         Ingredient,
         through='RecipeIngredient',
         related_name='recipes',
@@ -75,6 +80,7 @@ class Recipe(models.Model):
     tags = models.ManyToManyField(
         Tag,
         verbose_name='Теги',
+        related_name='recipes',
     )
     author = models.ForeignKey(
         User,
@@ -150,7 +156,7 @@ class ShoppingCart(models.Model):
 class RecipeIngredient(models.Model):
     """Модель связи рецепта и ингредиентов."""
 
-    ingredient = models.ForeignKey(
+    ingredients = models.ForeignKey(
         Ingredient,
         on_delete=models.CASCADE,
         related_name='recipe_ingredients',
@@ -162,7 +168,7 @@ class RecipeIngredient(models.Model):
         related_name='recipe_ingredients',
         verbose_name='Рецепт'
     )
-    quantity = models.PositiveSmallIntegerField(
+    amount = models.PositiveSmallIntegerField(
         verbose_name='Количество',
         validators=[MinValueValidator(
             1, message='Должен быть минимум 1 ингредиент!')]
@@ -172,6 +178,6 @@ class RecipeIngredient(models.Model):
         verbose_name = 'Ингредиенты в рецепте'
         verbose_name_plural = 'ингредиенты в рецепте'
         constraints = [
-            models.UniqueConstraint(fields=['ingredient', 'recipe'],
+            models.UniqueConstraint(fields=['ingredients', 'recipe'],
                                     name='unique_recipe_ingredients')
         ]
