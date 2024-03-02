@@ -8,7 +8,7 @@ from djoser.serializers import UserCreateSerializer, UserSerializer
 from django.shortcuts import get_object_or_404
 from recipes.models import (Favorite, Ingredient, Recipe,
                             RecipeIngredient, ShoppingCart, Tag)
-from rest_framework import serializers
+from rest_framework import serializers, status
 from rest_framework.fields import SerializerMethodField
 from rest_framework.exceptions import ValidationError
 from users.models import Subscription, User
@@ -51,15 +51,17 @@ class TagSerializer(serializers.ModelSerializer):
         return value
 
 
-class UserSerializer(UserSerializer):
+class UsersSerializer(UserSerializer):
     """Сериализатор пользователей."""
 
     is_subscribed = SerializerMethodField(read_only=True)
 
     class Meta:
         model = User
-        fields = ('id', 'email', 'username', 'first_name',
-                  'last_name', 'is_subscribed',)
+        fields = ('email', 'id',
+                  'username',
+                  'first_name', 'last_name',
+                  'is_subscribed',)
 
     def get_is_subscribed(self, obj):
         request = self.context.get('request')
@@ -82,22 +84,32 @@ class MiniRecipeSerializer(serializers.ModelSerializer):
         )
 
 
-class SubscriptionSerializer(UserSerializer):
+class SubscriptionSerializer(UsersSerializer):
     """Сериализатор подписок."""
-    id = serializers.IntegerField(source='following.id')
-    email = serializers.EmailField(source='following.email')
-    username = serializers.CharField(source='following.username')
-    first_name = serializers.CharField(source='following.first_name')
-    last_name = serializers.CharField(source='following.last_name')
-    recipes = serializers.SerializerMethodField()
-    is_subscribed = serializers.BooleanField(read_only=True)
     recipes_count = SerializerMethodField()
+    recipes = SerializerMethodField()
 
-    class Meta:
-        model = Subscription
-        fields = (
-            'email', 'id', 'username', 'first_name', 'last_name',
-            'is_subscribed', 'recipes', 'recipes_count',)
+    class Meta(UsersSerializer.Meta):
+        fields = UsersSerializer.Meta.fields + (
+            'recipes_count', 'recipes'
+        )
+        read_only_fields = ('email', 'username',
+                            'first_name', 'last_name')
+
+    def validate(self, data):
+        following = self.instance
+        user = self.context.get('request').user
+        if Subscription.objects.filter(following=following, user=user).exists():
+            raise ValidationError(
+                detail='Вы уже подписаны на этого пользователя!',
+                code=status.HTTP_400_BAD_REQUEST
+            )
+        if user == following:
+            raise ValidationError(
+                detail='Вы не можете подписаться на самого себя!',
+                code=status.HTTP_400_BAD_REQUEST
+            )
+        return data
 
     def get_recipes_count(self, obj):
         return obj.recipes.count()
@@ -108,9 +120,8 @@ class SubscriptionSerializer(UserSerializer):
         recipes = obj.recipes.all()
         if limit:
             recipes = recipes[:int(limit)]
-        return MiniRecipeSerializer(
-            recipes,
-            many=True, read_only=True).data
+        serializer = MiniRecipeSerializer(recipes, many=True, read_only=True)
+        return serializer.data
 
 
 class UserRegistrationSerializer(UserCreateSerializer):

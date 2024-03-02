@@ -3,7 +3,7 @@ from datetime import datetime
 from api.serializers import (IngredientSerializer,
                              MiniRecipeSerializer, RecipeGetSerializer,
                              RecipeSerializer, SubscriptionSerializer,
-                             TagSerializer, UserSerializer)
+                             TagSerializer)
 from django.db.models import Sum
 from django.http import HttpResponse
 from django.shortcuts import get_object_or_404
@@ -152,7 +152,7 @@ class UserViewSet(UserViewSet):
         permission_classes=[permissions.IsAuthenticated]
     )
     def subscribe(self, request, **kwargs):
-        user = request.user
+        user = self.request.user
         following_id = self.kwargs.get('id')
         following = get_object_or_404(User, id=following_id)
 
@@ -165,9 +165,13 @@ class UserViewSet(UserViewSet):
             return Response(serializer.data, status=status.HTTP_201_CREATED)
 
         if request.method == 'DELETE':
-            subscription = get_object_or_404(Subscription,
-                                             user=user,
-                                             following=following)
+            subscription = Subscription.objects.filter(
+                user=user, following=following
+            )
+            if not subscription.exists():
+                return Response(
+                    {'detail': 'Нельзя подписаться на несущствующий аккаунт!'},
+                    status=status.HTTP_400_BAD_REQUEST)
             subscription.delete()
             return Response(status=status.HTTP_204_NO_CONTENT)
 
