@@ -16,9 +16,8 @@ from api.serializers import (IngredientSerializer, MiniRecipeSerializer,
 from recipes.models import (Favorite, Ingredient, Recipe, RecipeIngredient,
                             ShoppingCart, Tag)
 from users.models import Subscription, User
-
 from .filters import IngredientSearchFilter, RecipeFilter
-from .pagination import FoodgramPagination, SubscriptionPagination
+from .pagination import FoodgramPagination
 from .permissions import IsAuthor, IsAuthorOrReadOnly
 
 

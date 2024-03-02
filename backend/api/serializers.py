@@ -7,7 +7,6 @@ from djoser.serializers import UserCreateSerializer, UserSerializer
 from rest_framework import serializers, status
 from rest_framework.exceptions import ValidationError
 from rest_framework.fields import SerializerMethodField
-
 from api.validators import validate_username
 from recipes.models import Ingredient, Recipe, RecipeIngredient, Tag
 from users.models import Subscription, User
@@ -97,7 +96,8 @@ class SubscriptionSerializer(UsersSerializer):
     def validate(self, data):
         following = self.instance
         user = self.context.get('request').user
-        if Subscription.objects.filter(following=following, user=user).exists():
+        if Subscription.objects.filter(following=following,
+                                       user=user).exists():
             raise ValidationError(
                 detail='Вы уже подписаны на этого пользователя!',
                 code=status.HTTP_400_BAD_REQUEST

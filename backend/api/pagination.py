@@ -6,9 +6,3 @@ class FoodgramPagination(PageNumberPagination):
 
     page_size = 6
     page_size_query_param = 'limit'
-
-
-class SubscriptionPagination(PageNumberPagination):
-    """Пагинация подписок."""
-
-    page_size_query_param = 'limit'
