@@ -7,6 +7,7 @@ MAX_LENGTH = 200
 
 
 class Tag(models.Model):
+    """Модель тегов."""
     name = models.CharField(
         verbose_name='Название',
         max_length=MAX_LENGTH,
@@ -34,6 +35,7 @@ class Tag(models.Model):
 
 
 class Ingredient(models.Model):
+    """Модель ингредиентов."""
     name = models.CharField(
         verbose_name='Название',
         max_length=MAX_LENGTH,
@@ -117,9 +119,9 @@ class Favorite(models.Model):
     class Meta:
         verbose_name = 'Избранное'
         verbose_name_plural = 'избранные'
-        constraints = [
-            UniqueConstraint(fields=['user', 'recipe'], name='unique_favorite')
-        ]
+        constraints = (
+            UniqueConstraint(fields=('user', 'recipe'), name='unique_favorite'),
+        )
 
     def __str__(self) -> str:
         return f'Рецепт "{self.recipe}" добавлен в Избранное'
@@ -144,10 +146,10 @@ class ShoppingCart(models.Model):
     class Meta:
         verbose_name = 'Корзина покупок'
         verbose_name_plural = 'корзина покупок'
-        constraints = [
+        constraints = (
             UniqueConstraint(
-                fields=['user', 'recipe'], name='unique_shopping_cart')
-        ]
+                fields=('user', 'recipe'), name='unique_shopping_cart'),
+        )
 
     def __str__(self) -> str:
         return f'Рецепт "{self.recipe}" добавлен в Корзину покупок'
@@ -177,7 +179,7 @@ class RecipeIngredient(models.Model):
     class Meta:
         verbose_name = 'Ингредиенты в рецепте'
         verbose_name_plural = 'ингредиенты в рецепте'
-        constraints = [
-            models.UniqueConstraint(fields=['ingredients', 'recipe'],
-                                    name='unique_recipe_ingredients')
-        ]
+        constraints = (
+            models.UniqueConstraint(fields=('ingredients', 'recipe'),
+                                    name='unique_recipe_ingredients'),
+        )

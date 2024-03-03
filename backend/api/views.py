@@ -55,26 +55,26 @@ class RecipeViewSet(viewsets.ModelViewSet):
             }, status=status.HTTP_400_BAD_REQUEST)
         return super().partial_update(request, *args, **kwargs)
 
-    @action(detail=True, methods=['post', 'delete'],
-            permission_classes=[permissions.IsAuthenticated])
+    @action(detail=True, methods=('post', 'delete'),
+            permission_classes=(permissions.IsAuthenticated,))
     def favorite(self, request, pk=None):
         if request.method == 'POST':
             return self.add_recipe(Favorite, request.user, pk)
-        elif request.method == 'DELETE':
+        if request.method == 'DELETE':
             return self.delete_recipe(Favorite, request.user, pk)
         return None
 
-    @action(detail=True, methods=['post', 'delete'],
-            permission_classes=[permissions.IsAuthenticated])
+    @action(detail=True, methods=('post', 'delete'),
+            permission_classes=(permissions.IsAuthenticated,))
     def shopping_cart(self, request, pk=None):
         if request.method == 'POST':
             return self.add_recipe(ShoppingCart, request.user, pk)
-        elif request.method == 'DELETE':
+        if request.method == 'DELETE':
             return self.delete_recipe(ShoppingCart, request.user, pk)
         return None
 
-    @action(detail=False, methods=['get'],
-            permission_classes=[permissions.IsAuthenticated])
+    @action(detail=False, methods=('get',),
+            permission_classes=(permissions.IsAuthenticated,))
     def download_shopping_cart(self, request):
         user = request.user
         if not user.shopping_cart.exists():
@@ -88,10 +88,9 @@ class RecipeViewSet(viewsets.ModelViewSet):
         ).annotate(amount=Sum('amount'))
 
         today = datetime.today()
-        shopping_list = (
-            f'Список покупок для: {user.get_full_name()}\n\n'
-            f'Дата: {today:%Y-%m-%d}\n\n'
-        )
+        user_full_name = user.get_full_name()
+        shopping_list = f'Список покупок для {user_full_name}\n\n'
+        shopping_list += f'Дата: {today:%Y-%m-%d}\n\n'
         shopping_list += '\n'.join([
             f'- {ingredient["ingredients__name"]} '
             f'({ingredient["ingredients__measurement_unit"]})'
@@ -147,8 +146,8 @@ class UserViewSet(UserViewSet):
 
     @action(
         detail=True,
-        methods=['post', 'delete'],
-        permission_classes=[permissions.IsAuthenticated]
+        methods=('post', 'delete',),
+        permission_classes=(permissions.IsAuthenticated,)
     )
     def subscribe(self, request, **kwargs):
         user = self.request.user
@@ -158,7 +157,7 @@ class UserViewSet(UserViewSet):
         if request.method == 'POST':
             serializer = SubscriptionSerializer(following,
                                                 data=request.data,
-                                                context={"request": request})
+                                                context={'request': request})
             serializer.is_valid(raise_exception=True)
             Subscription.objects.create(user=user, following=following)
             return Response(serializer.data, status=status.HTTP_201_CREATED)
@@ -176,7 +175,7 @@ class UserViewSet(UserViewSet):
 
     @action(
         detail=False,
-        permission_classes=[permissions.IsAuthenticated]
+        permission_classes=(permissions.IsAuthenticated,)
     )
     def subscriptions(self, request):
         user = request.user

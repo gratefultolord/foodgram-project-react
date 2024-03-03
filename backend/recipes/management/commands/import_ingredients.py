@@ -17,6 +17,6 @@ class Command(BaseCommand):
         ) as file:
             reader = csv.DictReader(file)
             Ingredient.objects.bulk_create(
-                Ingredient(**data) for data in reader
+                Ingredient(**ingredient_data) for ingredient_data in reader
             )
         self.stdout.write(self.style.SUCCESS('Ингредиенты импортированы!'))

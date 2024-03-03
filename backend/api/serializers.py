@@ -17,12 +17,12 @@ MAX_FIELD_LENGTH = 150
 class Base64ImageField(serializers.ImageField):
     """Кастомный сериализатор, преобразующий картинки."""
 
-    def to_internal_value(self, data):
-        if isinstance(data, str) and data.startswith('data:image'):
-            format, imgstr = data.split(';base64,')
+    def to_internal_value(self, image_data):
+        if isinstance(image_data, str) and image_data.startswith('data:image'):
+            format, imgstr = image_data.split(';base64,')
             ext = format.split('/')[-1]
-            data = ContentFile(base64.b64decode(imgstr), name='temp.' + ext)
-        return super().to_internal_value(data)
+            image_data = ContentFile(base64.b64decode(imgstr), name=f'temp.{ext}')
+        return super().to_internal_value(image_data)
 
 
 class IngredientSerializer(serializers.ModelSerializer):
@@ -43,7 +43,7 @@ class TagSerializer(serializers.ModelSerializer):
     def validate_color(self, value):
         if not re.match(r'^#(?:[0-9a-fA-F]{3}){1,2}$', value):
             raise serializers.ValidationError(
-                "Цвет должен быть в формате HEX."
+                'Цвет должен быть в формате HEX.'
             )
         return value
 
@@ -69,6 +69,7 @@ class UsersSerializer(UserSerializer):
 
 class MiniRecipeSerializer(serializers.ModelSerializer):
     """Сериализатор короткой формы рецептов."""
+
     image = Base64ImageField()
 
     class Meta:
@@ -169,13 +170,12 @@ class RecipeGetSerializer(serializers.ModelSerializer):
 
     def get_ingredients(self, obj):
         recipe = obj
-        ingredients = recipe.ingredients.values(
+        return recipe.ingredients.values(
             'id',
             'name',
             'measurement_unit',
             amount=F('recipe_ingredients__amount')
         )
-        return ingredients
 
     def get_is_favorited(self, obj):
         user = self.context.get('request').user
@@ -229,7 +229,7 @@ class RecipeSerializer(serializers.ModelSerializer):
                 )
             if ingredient['ingredients']['id'] in ingredient_ids:
                 raise serializers.ValidationError(
-                    "Ингредиенты не могут повторяться!")
+                    'Ингредиенты не могут повторяться!')
             ingredient_ids.append(ingredient['ingredients']['id'])
         return value
 

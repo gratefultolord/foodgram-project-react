@@ -11,13 +11,12 @@ class IngredientSearchFilter(SearchFilter):
 
 class RecipeFilter(FilterSet):
     """
-    Фильтр для рецептов по тегам,
-    избранному и статусу нахождения в корзине покупок.
+    Фильтр поиска для рецептов.
 
-    Фильтр `tags` позволяет фильтровать рецепты по слагам тегов.
-    Фильтры `is_favorited` и `is_in_shopping_cart` возвращают рецепты
-    в зависимости от избранного пользователя
-    и нахождения в корзине покупок соответственно.
+    Ключевые параметры:
+    tags - позволяет фильтровать рецепты по слагам тегов
+    is_favorited - нахождение рецепта в избранном
+    is_in_shopping_cart - в корзине покупок.
     """
 
     tags = filters.ModelMultipleChoiceFilter(
@@ -32,32 +31,19 @@ class RecipeFilter(FilterSet):
 
     class Meta:
         model = Recipe
-        fields = ['tags', 'author', 'is_favorited', 'is_in_shopping_cart']
+        fields = ('tags', 'author', 'is_favorited', 'is_in_shopping_cart')
 
-    def filter_is_favorited(self, queryset, name, value):
-        """
-        Фильтрует запрос для включения рецептов,
-        добавленных в избранное текущим пользователем.
-        Применяется только если `value` истинно
-        и пользователь аутентифицирован.
-        """
+    def filter_is_favorited(self, queryset, name, is_favorited_value):
         if not self.request.user.is_authenticated:
             return queryset
-        if value:
+        if is_favorited_value:
             return queryset.filter(favorites__user=self.request.user)
-        else:
-            return queryset
+        return queryset
 
-    def filter_is_in_shopping_cart(self, queryset, name, value):
-        """
-        Фильтрует запрос для включения рецептов, находящихся
-        в корзине покупок текущего пользователя.
-        Применяется только если `value` истинно
-        и пользователь аутентифицирован.
-        """
+    def filter_is_in_shopping_cart(
+            self, queryset, name, is_in_shopping_cart_value):
         if not self.request.user.is_authenticated:
             return queryset
-        if value:
+        if is_in_shopping_cart_value:
             return queryset.filter(shopping_cart__user=self.request.user)
-        else:
-            return queryset
+        return queryset

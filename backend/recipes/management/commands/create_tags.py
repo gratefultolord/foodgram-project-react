@@ -6,10 +6,10 @@ class Command(BaseCommand):
     help = 'Создание тегов'
 
     def handle(self, *args, **kwargs):
-        data = [
+        tag_data = (
             {'name': 'Завтрак', 'color': '#FFA726', 'slug': 'breakfast'},
             {'name': 'Обед', 'color': '#66BB6A', 'slug': 'lunch'},
             {'name': 'Ужин', 'color': '#5E35B1', 'slug': 'dinner'}
-        ]
-        Tag.objects.bulk_create(Tag(**tag) for tag in data)
+        )
+        Tag.objects.bulk_create(Tag(**tag) for tag in tag_data)
         self.stdout.write(self.style.SUCCESS('Теги созданы!'))
