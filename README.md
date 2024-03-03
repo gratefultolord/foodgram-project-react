@@ -18,7 +18,7 @@ password: foodgram234
 ### Клонировать репозиторий
 - Клонировать репозиторий:
 ```
-https://github.com/mikhailsoldatkin/foodgram-project-react.git
+git clone git@github.com:gratefultolord/foodgram-project-react.git
 ```
 
 - Установить на сервере Docker, Docker Compose:
