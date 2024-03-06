@@ -125,9 +125,6 @@ SECRET_KEY='секретный ключ Django'
 docker-compose up -d
 ```
 ```
-
-
-
 - После запуска проект будут доступен по адресу: [http://localhost/](http://localhost/)
 ```
 
