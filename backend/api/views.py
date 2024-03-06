@@ -1,8 +1,9 @@
 from datetime import datetime
 
-from api.serializers import (IngredientSerializer, MiniRecipeSerializer,
+from api.serializers import (IngredientSerializer,
                              RecipeGetSerializer, RecipeSerializer,
-                             SubscriptionSerializer, TagSerializer)
+                             SubscriptionSerializer, TagSerializer,
+                             FavoriteSerializer, ShoppingCartSerializer)
 from django.db.models import Sum
 from django.http import HttpResponse
 from django.shortcuts import get_object_or_404
@@ -12,7 +13,6 @@ from recipes.models import (Favorite, Ingredient, Recipe, RecipeIngredient,
                             ShoppingCart, Tag)
 from rest_framework import permissions, status, viewsets
 from rest_framework.decorators import action
-from rest_framework.exceptions import ValidationError
 from rest_framework.response import Response
 from users.models import Subscription, User
 
@@ -22,6 +22,8 @@ from .permissions import IsAuthor, IsAuthorOrReadOnly
 
 
 class IngredientViewSet(viewsets.ReadOnlyModelViewSet):
+    """Вьюсет для ингредиентов."""
+
     queryset = Ingredient.objects.all()
     serializer_class = IngredientSerializer
     filter_backends = (IngredientSearchFilter,)
@@ -29,6 +31,8 @@ class IngredientViewSet(viewsets.ReadOnlyModelViewSet):
 
 
 class RecipeViewSet(viewsets.ModelViewSet):
+    """Вьюсет для рецептов."""
+
     queryset = Recipe.objects.all()
     serializer_class = RecipeGetSerializer
     permission_classes = (IsAuthorOrReadOnly,)
@@ -44,6 +48,14 @@ class RecipeViewSet(viewsets.ModelViewSet):
             return RecipeGetSerializer
         return RecipeSerializer
 
+    def get_serializer(self, *args, **kwargs):
+        if self.action == 'favorite':
+            return FavoriteSerializer(*args, **kwargs)
+        elif self.action == 'shopping_cart':
+            return ShoppingCartSerializer(*args, **kwargs)
+        else:
+            return super().get_serializer(*args, **kwargs)
+
     def partial_update(self, request, *args, **kwargs):
         if 'ingredients' not in request.data:
             return Response({
@@ -55,20 +67,27 @@ class RecipeViewSet(viewsets.ModelViewSet):
             }, status=status.HTTP_400_BAD_REQUEST)
         return super().partial_update(request, *args, **kwargs)
 
-    @action(detail=True, methods=('post', 'delete'),
-            permission_classes=(permissions.IsAuthenticated,))
-    def favorite(self, request, pk=None):
+    def perform_action(self, serializer_class, user, pk):
+        serializer = serializer_class(
+            data={'user': user.id, 'recipe': pk},
+            context={'request': self.request}
+        )
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+        return Response(serializer.data, status=status.HTTP_201_CREATED)
+
+    @action(methods=('POST', 'DELETE'), detail=True)
+    def favorite(self, request, pk):
         if request.method == 'POST':
-            return self.add_recipe(Favorite, request.user, pk)
+            return self.perform_action(FavoriteSerializer, request.user, pk)
         if request.method == 'DELETE':
             return self.delete_recipe(Favorite, request.user, pk)
         return None
 
-    @action(detail=True, methods=('post', 'delete'),
-            permission_classes=(permissions.IsAuthenticated,))
-    def shopping_cart(self, request, pk=None):
+    @action(methods=('POST', 'DELETE'), detail=True)
+    def shopping_cart(self, request, pk):
         if request.method == 'POST':
-            return self.add_recipe(ShoppingCart, request.user, pk)
+            return self.perform_action(ShoppingCartSerializer, request.user, pk)
         if request.method == 'DELETE':
             return self.delete_recipe(ShoppingCart, request.user, pk)
         return None
@@ -91,12 +110,12 @@ class RecipeViewSet(viewsets.ModelViewSet):
         user_full_name = user.get_full_name()
         shopping_list = f'Список покупок для {user_full_name}\n\n'
         shopping_list += f'Дата: {today:%Y-%m-%d}\n\n'
-        shopping_list += '\n'.join([
+        shopping_list += '\n'.join((
             f'- {ingredient["ingredients__name"]} '
             f'({ingredient["ingredients__measurement_unit"]})'
             f' - {ingredient["amount"]}'
             for ingredient in ingredients
-        ])
+        ))
         shopping_list += f'\n\nFoodgram ({today:%Y})'
 
         filename = f'{user.username}_shopping_list.txt'
@@ -104,20 +123,6 @@ class RecipeViewSet(viewsets.ModelViewSet):
         response['Content-Disposition'] = f'attachment; filename={filename}'
 
         return response
-
-    def add_recipe(self, model, user, pk):
-        try:
-            recipe = Recipe.objects.get(id=pk)
-        except Recipe.DoesNotExist:
-            raise ValidationError('Данного рецепта не существует.')
-        if model.objects.filter(user=user, recipe__id=pk).exists():
-            return Response({
-                'errors': 'Рецепт уже добавлен в список'
-            }, status=status.HTTP_400_BAD_REQUEST)
-        recipe = get_object_or_404(Recipe, id=pk)
-        model.objects.create(user=user, recipe=recipe)
-        serializer = MiniRecipeSerializer(recipe)
-        return Response(serializer.data, status=status.HTTP_201_CREATED)
 
     def delete_recipe(self, model, user, pk):
         recipe = get_object_or_404(Recipe, id=pk)
@@ -131,11 +136,15 @@ class RecipeViewSet(viewsets.ModelViewSet):
 
 
 class TagViewSet(viewsets.ReadOnlyModelViewSet):
+    """Вьюсет для тегов."""
+
     queryset = Tag.objects.all()
     serializer_class = TagSerializer
 
 
 class UserViewSet(UserViewSet):
+    """Вьюсет для пользователей."""
+
     queryset = User.objects.all()
     pagination_class = FoodgramPagination
 

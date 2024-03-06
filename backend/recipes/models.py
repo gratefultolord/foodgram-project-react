@@ -8,6 +8,7 @@ MAX_LENGTH = 200
 
 class Tag(models.Model):
     """Модель тегов."""
+
     name = models.CharField(
         verbose_name='Название',
         max_length=MAX_LENGTH,
@@ -36,6 +37,7 @@ class Tag(models.Model):
 
 class Ingredient(models.Model):
     """Модель ингредиентов."""
+
     name = models.CharField(
         verbose_name='Название',
         max_length=MAX_LENGTH,
@@ -120,7 +122,8 @@ class Favorite(models.Model):
         verbose_name = 'Избранное'
         verbose_name_plural = 'избранные'
         constraints = (
-            UniqueConstraint(fields=('user', 'recipe'), name='unique_favorite'),
+            UniqueConstraint(
+                fields=('user', 'recipe',), name='unique_favorite'),
         )
 
     def __str__(self) -> str:

@@ -1,9 +1,12 @@
 # Проект Foodgram
 [![Main Foodgram Workflow](https://github.com/gratefultolord/foodgram-project-react/actions/workflows/main.yml/badge.svg)](https://github.com/gratefultolord/foodgram-project-react/actions/workflows/main.yml)
+***
 Продуктовый помощник. Включает в себя функции создания рецептов, сохранения их в избранное, добавления в корзину покупок, которую можно скачать в формате txt. Также есть возможность подписки на других авторов.
+***
 [Адрес](https://fooddotgram.ddns.net)
 ### Суперпользователь
 login: acer-user123@mail.ru
+
 password: foodgram234
 ## Использованные технологии:
 [![Python](https://img.shields.io/badge/Python-3776AB?style=for-the-badge&logo=python&logoColor=white)]
@@ -18,7 +21,7 @@ password: foodgram234
 ### Клонировать репозиторий
 - Клонировать репозиторий:
 ```
-https://github.com/mikhailsoldatkin/foodgram-project-react.git
+git clone git@github.com:gratefultolord/foodgram-project-react.git
 ```
 
 - Установить на сервере Docker, Docker Compose:
@@ -126,7 +129,7 @@ docker-compose up -d
 
 
 - После запуска проект будут доступен по адресу: [http://localhost/](http://localhost/)
-
+```
 
 ### Автор:
 
