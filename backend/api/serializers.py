@@ -1,15 +1,15 @@
 import base64
 import re
 
+from api.validators import validate_username
 from django.core.files.base import ContentFile
 from django.db.models import F
 from djoser.serializers import UserCreateSerializer, UserSerializer
+from recipes.models import (Favorite, Ingredient, Recipe, RecipeIngredient,
+                            ShoppingCart, Tag)
 from rest_framework import serializers, status
 from rest_framework.exceptions import ValidationError
 from rest_framework.fields import SerializerMethodField
-from api.validators import validate_username
-from recipes.models import (Favorite, Ingredient, Recipe, RecipeIngredient,
-                            ShoppingCart, Tag)
 from users.models import Subscription, User
 
 MAX_FIELD_LENGTH = 150
