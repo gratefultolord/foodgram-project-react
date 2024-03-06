@@ -1,19 +1,20 @@
 from datetime import datetime
 
-from api.serializers import (IngredientSerializer,
-                             RecipeGetSerializer, RecipeSerializer,
-                             SubscriptionSerializer, TagSerializer,
-                             FavoriteSerializer, ShoppingCartSerializer)
 from django.db.models import Sum
 from django.http import HttpResponse
 from django.shortcuts import get_object_or_404
 from django_filters.rest_framework import DjangoFilterBackend
 from djoser.views import UserViewSet
-from recipes.models import (Favorite, Ingredient, Recipe, RecipeIngredient,
-                            ShoppingCart, Tag)
 from rest_framework import permissions, status, viewsets
 from rest_framework.decorators import action
 from rest_framework.response import Response
+
+from api.serializers import (FavoriteSerializer, IngredientSerializer,
+                             RecipeGetSerializer, RecipeSerializer,
+                             ShoppingCartSerializer, SubscriptionSerializer,
+                             TagSerializer)
+from recipes.models import (Favorite, Ingredient, Recipe, RecipeIngredient,
+                            ShoppingCart, Tag)
 from users.models import Subscription, User
 
 from .filters import IngredientSearchFilter, RecipeFilter
@@ -87,7 +88,8 @@ class RecipeViewSet(viewsets.ModelViewSet):
     @action(methods=('POST', 'DELETE'), detail=True)
     def shopping_cart(self, request, pk):
         if request.method == 'POST':
-            return self.perform_action(ShoppingCartSerializer, request.user, pk)
+            return self.perform_action(
+                ShoppingCartSerializer, request.user, pk)
         if request.method == 'DELETE':
             return self.delete_recipe(ShoppingCart, request.user, pk)
         return None
