@@ -33,7 +33,7 @@ class User(AbstractUser):
         verbose_name = 'Пользователь'
         verbose_name_plural = 'пользователи'
 
-    def __str__(self):
+    def __str__(self) -> str:
         return self.username
 
 
@@ -53,4 +53,10 @@ class Subscription(models.Model):
                 name='unique_subscription',
                 fields=('user', 'following')
             ),
+        )
+
+    def __str__(self) -> str:
+        return (
+            f'Пользователь {self.user.username} '
+            f'подписан на {self.author.username}'
         )

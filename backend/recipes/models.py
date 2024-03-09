@@ -27,11 +27,10 @@ class Tag(models.Model):
     )
 
     class Meta:
-        ordering = ('-id',)
         verbose_name = 'Тег'
         verbose_name_plural = 'теги'
 
-    def __str__(self):
+    def __str__(self) -> str:
         return f'{self.name} (цвет: {self.color})'
 
 
@@ -51,7 +50,7 @@ class Ingredient(models.Model):
         verbose_name = 'Ингредиент'
         verbose_name_plural = 'ингредиенты'
 
-    def __str__(self):
+    def __str__(self) -> str:
         return self.name
 
 
@@ -98,7 +97,7 @@ class Recipe(models.Model):
         verbose_name = 'Рецепт'
         verbose_name_plural = 'рецепты'
 
-    def __str__(self):
+    def __str__(self) -> str:
         return self.name
 
 
@@ -175,8 +174,8 @@ class RecipeIngredient(models.Model):
     )
     amount = models.PositiveSmallIntegerField(
         verbose_name='Количество',
-        validators=[MinValueValidator(
-            1, message='Должен быть минимум 1 ингредиент!')]
+        validators=(MinValueValidator(
+            1, message='Должен быть минимум 1 ингредиент!'),)
     )
 
     class Meta:
@@ -185,4 +184,10 @@ class RecipeIngredient(models.Model):
         constraints = (
             models.UniqueConstraint(fields=('ingredients', 'recipe'),
                                     name='unique_recipe_ingredients'),
+        )
+
+    def __str__(self):
+        return (
+            f'{self.ingredients.name} '
+            f'({self.ingredients.measurement_unit}) - {self.amount}'
         )

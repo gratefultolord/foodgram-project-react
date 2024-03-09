@@ -2,6 +2,7 @@ import base64
 import re
 
 from api.validators import validate_username
+from django.contrib.auth import get_user_model
 from django.core.files.base import ContentFile
 from django.db.models import F
 from djoser.serializers import UserCreateSerializer, UserSerializer
@@ -10,9 +11,10 @@ from recipes.models import (Favorite, Ingredient, Recipe, RecipeIngredient,
 from rest_framework import serializers, status
 from rest_framework.exceptions import ValidationError
 from rest_framework.fields import SerializerMethodField
-from users.models import Subscription, User
+from users.models import Subscription
 
 MAX_FIELD_LENGTH = 150
+User = get_user_model()
 
 
 class Base64ImageField(serializers.ImageField):
@@ -42,12 +44,13 @@ class TagSerializer(serializers.ModelSerializer):
         model = Tag
         fields = '__all__'
 
-    def validate_color(self, value):
-        if not re.match(r'^#(?:[0-9a-fA-F]{3}){1,2}$', value):
+    def validate_color(self, color_value):
+        if not re.match(r'^#(?:[0-9a-fA-F]{3}){1,2}$',
+                        color_value):
             raise serializers.ValidationError(
                 'Цвет должен быть в формате HEX.'
             )
-        return value
+        return color_value
 
 
 class UsersSerializer(UserSerializer):
@@ -64,15 +67,11 @@ class UsersSerializer(UserSerializer):
 
     def get_is_subscribed(self, obj):
         request = self.context.get('request')
-        if self.context.get('request').user.is_anonymous:
-            return False
-        return obj.following.filter(user=request.user).exists()
+        return obj.following.filter(user_id=request.user.id).exists()
 
 
 class MiniRecipeSerializer(serializers.ModelSerializer):
     """Сериализатор короткой формы рецептов."""
-
-    image = Base64ImageField()
 
     class Meta:
         model = Recipe
@@ -135,7 +134,7 @@ class UserRegistrationSerializer(UserCreateSerializer):
     class Meta:
         model = User
         fields = (
-            'id', 'email', 'username', 'first_name', 'last_name', 'password')
+            'id', 'email', 'username', 'first_name', 'last_name',)
 
 
 class RecipeIngredientSerializer(serializers.ModelSerializer):
@@ -148,6 +147,13 @@ class RecipeIngredientSerializer(serializers.ModelSerializer):
         model = RecipeIngredient
         fields = ('id', 'amount',)
 
+    def validate_amount(self, amount_value):
+        if amount_value < 1:
+            raise serializers.ValidationError(
+                'Количество ингредиентов не может быть меньше 1!'
+            )
+        return amount_value
+
 
 class RecipeGetSerializer(serializers.ModelSerializer):
     """Сериализатор рецептов для безопасных запросов."""
@@ -155,7 +161,6 @@ class RecipeGetSerializer(serializers.ModelSerializer):
     tags = TagSerializer(many=True, read_only=True)
     author = UserSerializer(read_only=True)
     ingredients = serializers.SerializerMethodField()
-    image = Base64ImageField()
     is_favorited = serializers.SerializerMethodField(read_only=True)
     is_in_shopping_cart = serializers.SerializerMethodField(read_only=True)
 
@@ -229,10 +234,6 @@ class RecipeSerializer(serializers.ModelSerializer):
                                              ).exists():
                 raise serializers.ValidationError(
                     'Данного ингредиента не существует!')
-            if ingredient['amount'] < 1:
-                raise serializers.ValidationError(
-                    'Количество ингредиентов не может быть меньше 1!'
-                )
             if ingredient['ingredients']['id'] in ingredient_ids:
                 raise serializers.ValidationError(
                     'Ингредиенты не могут повторяться!')
@@ -247,18 +248,25 @@ class RecipeSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError('Теги не могут повторяться!')
         return tag_value
 
+    def create_ingredients(self, recipe, ingredients_data):
+        recipe_ingredients = (
+            RecipeIngredient(
+                recipe=recipe,
+                ingredients_id=ingredient_data['ingredients']['id'],
+                amount=ingredient_data['amount']
+            ) for ingredient_data in ingredients_data
+        )
+        RecipeIngredient.objects.bulk_create(recipe_ingredients)
+
+    def create_tags(self, recipe, tags_data):
+        recipe.tags.set(tags_data)
+
     def create(self, validated_data):
         tags_data = validated_data.pop('tags')
         ingredients_data = validated_data.pop('recipe_ingredients')
         recipe = Recipe.objects.create(**validated_data)
-        for ingredient_data in ingredients_data:
-            ingredient = Ingredient.objects.get(
-                id=ingredient_data['ingredients']['id'])
-            RecipeIngredient.objects.create(
-                recipe=recipe,
-                ingredients=ingredient, amount=ingredient_data['amount'])
-        for tag_data in tags_data:
-            recipe.tags.add(tag_data)
+        self.create_ingredients(recipe, ingredients_data)
+        self.create_tags(recipe, tags_data)
         return recipe
 
     def update(self, instance, validated_data):
@@ -269,18 +277,17 @@ class RecipeSerializer(serializers.ModelSerializer):
             'cooking_time', instance.cooking_time)
 
         ingredients_data = validated_data.pop('recipe_ingredients', [])
+        if not ingredients_data:
+            raise serializers.ValidationError(
+                'Поле ингредиентов обязательно для заполнения!')
         instance.recipe_ingredients.all().delete()
-        for ingredient_data in ingredients_data:
-            ingredient = Ingredient.objects.get(
-                id=ingredient_data['ingredients']['id'])
-            RecipeIngredient.objects.create(
-                recipe=instance,
-                ingredients=ingredient, amount=ingredient_data['amount'])
-
+        self.create_ingredients(instance, ingredients_data)
         tags_data = validated_data.pop('tags', [])
+        if not tags_data:
+            raise serializers.ValidationError(
+                'Поле тегов обязательно для заполения!')
         instance.tags.clear()
-        for tag_data in tags_data:
-            instance.tags.add(tag_data)
+        self.create_tags(instance, tags_data)
 
         instance.save()
         return instance
@@ -313,12 +320,6 @@ class BaseRecipeActionSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError('Рецепт уже добавлен')
 
         return data
-
-    def create(self, validated_data):
-        user = self.context.get('request').user
-        recipe = validated_data['recipe']
-        instance = self.Meta.model.objects.create(user=user, recipe=recipe)
-        return instance
 
     def to_representation(self, instance):
         representation = super().to_representation(instance)

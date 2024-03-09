@@ -2,11 +2,12 @@ from datetime import datetime
 
 from api.filters import IngredientSearchFilter, RecipeFilter
 from api.pagination import FoodgramPagination
-from api.permissions import IsAuthor, IsAuthorOrReadOnly
+from api.permissions import IsAuthorOrReadOnly
 from api.serializers import (FavoriteSerializer, IngredientSerializer,
                              RecipeGetSerializer, RecipeSerializer,
                              ShoppingCartSerializer, SubscriptionSerializer,
                              TagSerializer)
+from django.contrib.auth import get_user_model
 from django.db.models import Sum
 from django.http import HttpResponse
 from django.shortcuts import get_object_or_404
@@ -17,7 +18,9 @@ from recipes.models import (Favorite, Ingredient, Recipe, RecipeIngredient,
 from rest_framework import permissions, status, viewsets
 from rest_framework.decorators import action
 from rest_framework.response import Response
-from users.models import Subscription, User
+from users.models import Subscription
+
+User = get_user_model()
 
 
 class IngredientViewSet(viewsets.ReadOnlyModelViewSet):
@@ -54,17 +57,6 @@ class RecipeViewSet(viewsets.ModelViewSet):
             return ShoppingCartSerializer(*args, **kwargs)
         else:
             return super().get_serializer(*args, **kwargs)
-
-    def partial_update(self, request, *args, **kwargs):
-        if 'ingredients' not in request.data:
-            return Response({
-                'error': 'Поле ингредиентов обязательно!'
-            }, status=status.HTTP_400_BAD_REQUEST)
-        if 'tags' not in request.data:
-            return Response({
-                'error': 'Поле тегов обязательно!'
-            }, status=status.HTTP_400_BAD_REQUEST)
-        return super().partial_update(request, *args, **kwargs)
 
     def perform_action(self, serializer_class, user, pk):
         serializer = serializer_class(
@@ -150,7 +142,8 @@ class UserViewSet(UserViewSet):
 
     def get_permissions(self):
         if self.action == 'me':
-            self.permission_classes = (permissions.IsAuthenticated, IsAuthor,)
+            self.permission_classes = (permissions.IsAuthenticated,
+                                       IsAuthorOrReadOnly,)
         return super().get_permissions()
 
     @action(
