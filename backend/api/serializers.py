@@ -134,7 +134,7 @@ class UserRegistrationSerializer(UserCreateSerializer):
     class Meta:
         model = User
         fields = (
-            'id', 'email', 'username', 'first_name', 'last_name',)
+            'id', 'email', 'username', 'first_name', 'last_name', 'password')
 
 
 class RecipeIngredientSerializer(serializers.ModelSerializer):
