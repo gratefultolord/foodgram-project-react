@@ -12,7 +12,9 @@ SECRET_KEY = os.getenv('SECRET_KEY')
 
 DEBUG = os.getenv('DEBUG')
 
-ALLOWED_HOSTS = ['localhost', '127.0.0.1', 'fooddotgram.ddns.net']
+ALLOWED_HOSTS = ['localhost', '127.0.0.1', 'fooddotgram.ddns.net', 'backend']
+
+CSRF_TRUSTED_ORIGINS = ['fooddotgram.ddns.net']
 
 
 INSTALLED_APPS = [
@@ -140,4 +142,4 @@ MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
-USE_X_FORWARDED_PROTO = True
+SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')

@@ -54,6 +54,8 @@ class Subscription(models.Model):
                 fields=('user', 'following')
             ),
         )
+        verbose_name = 'Подписка'
+        verbose_name_plural = 'подписки'
 
     def __str__(self) -> str:
         return (

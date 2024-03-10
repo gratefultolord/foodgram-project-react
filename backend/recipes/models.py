@@ -4,6 +4,7 @@ from django.db.models import UniqueConstraint
 from users.models import User
 
 MAX_LENGTH = 200
+MAX_COLOR_LENGTH = 7
 
 
 class Tag(models.Model):
@@ -16,7 +17,7 @@ class Tag(models.Model):
     )
     color = models.CharField(
         verbose_name='Цвет',
-        max_length=MAX_LENGTH,
+        max_length=MAX_COLOR_LENGTH,
         unique=True,
         db_index=False,
     )

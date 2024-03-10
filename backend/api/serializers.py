@@ -8,8 +8,7 @@ from django.db.models import F
 from djoser.serializers import UserCreateSerializer, UserSerializer
 from recipes.models import (Favorite, Ingredient, Recipe, RecipeIngredient,
                             ShoppingCart, Tag)
-from rest_framework import serializers, status
-from rest_framework.exceptions import ValidationError
+from rest_framework import serializers
 from rest_framework.fields import SerializerMethodField
 from users.models import Subscription
 
@@ -99,17 +98,21 @@ class SubscriptionSerializer(UsersSerializer):
     def validate(self, data):
         following = self.instance
         user = self.context.get('request').user
-        if Subscription.objects.filter(following=following,
-                                       user=user).exists():
-            raise ValidationError(
-                detail='Вы уже подписаны на этого пользователя!',
-                code=status.HTTP_400_BAD_REQUEST
-            )
-        if user == following:
-            raise ValidationError(
-                detail='Вы не можете подписаться на самого себя!',
-                code=status.HTTP_400_BAD_REQUEST
-            )
+        subscription = Subscription.objects.filter(
+            following=following, user=user
+        )
+        if self.context.get('request').method == 'POST':
+            if subscription.exists():
+                raise serializers.ValidationError(
+                    'Вы уже подписаны на этого пользователя!')
+            if user == following:
+                raise serializers.ValidationError(
+                    'Вы не можете подписаться на самого себя!')
+        if self.context.get('request').method == 'DELETE':
+            if not subscription.exists():
+                raise serializers.ValidationError(
+                    'Нельзя отменить несуществующую подписку!'
+                )
         return data
 
     def get_recipes_count(self, obj):
@@ -305,7 +308,7 @@ class BaseRecipeActionSerializer(serializers.ModelSerializer):
     recipe = serializers.PrimaryKeyRelatedField(queryset=Recipe.objects.all())
 
     class Meta:
-        fields = ('id', 'recipe', 'user')
+        fields = ('recipe', 'user')
         read_only_fields = ('recipe', 'user')
 
     def validate(self, data):

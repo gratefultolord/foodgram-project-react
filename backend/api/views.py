@@ -155,12 +155,12 @@ class UserViewSet(UserViewSet):
         user = self.request.user
         following_id = self.kwargs.get('id')
         following = get_object_or_404(User, id=following_id)
+        serializer = SubscriptionSerializer(following,
+                                            data=request.data,
+                                            context={'request': request})
+        serializer.is_valid(raise_exception=True)
 
         if request.method == 'POST':
-            serializer = SubscriptionSerializer(following,
-                                                data=request.data,
-                                                context={'request': request})
-            serializer.is_valid(raise_exception=True)
             Subscription.objects.create(user=user, following=following)
             return Response(serializer.data, status=status.HTTP_201_CREATED)
 
@@ -168,10 +168,6 @@ class UserViewSet(UserViewSet):
             subscription = Subscription.objects.filter(
                 user=user, following=following
             )
-            if not subscription.exists():
-                return Response(
-                    {'detail': 'Нельзя подписаться на несущствующий аккаунт!'},
-                    status=status.HTTP_400_BAD_REQUEST)
             subscription.delete()
             return Response(status=status.HTTP_204_NO_CONTENT)
 
