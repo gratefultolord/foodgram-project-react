@@ -227,12 +227,14 @@ class RecipeSerializer(serializers.ModelSerializer):
             'cooking_time',
         )
 
-    def validate_ingredients(self, ingredient_value):
-        if not ingredient_value:
-            raise serializers.ValidationError(
-                'Поле ингредиентов не может быть пустым!')
+    def validate(self, data):
+        ingredients_data = data.get('recipe_ingredients')
+        if not ingredients_data:
+            raise serializers.ValidationError({
+                'recipe_ingredients': 'Поле ингредиентов обязательно!'
+            })
         ingredient_ids = []
-        for ingredient in ingredient_value:
+        for ingredient in ingredients_data:
             if not Ingredient.objects.filter(id=ingredient['ingredients']['id']
                                              ).exists():
                 raise serializers.ValidationError(
@@ -241,15 +243,14 @@ class RecipeSerializer(serializers.ModelSerializer):
                 raise serializers.ValidationError(
                     'Ингредиенты не могут повторяться!')
             ingredient_ids.append(ingredient['ingredients']['id'])
-        return ingredient_value
-
-    def validate_tags(self, tag_value):
-        if not tag_value:
-            raise serializers.ValidationError(
-                'Поле тегов не может быть пустым!')
-        if len(tag_value) != len(set(tag_value)):
+        tags_data = data.get('tags')
+        if not tags_data:
+            raise serializers.ValidationError({
+                'tags': 'Поле тегов обязательно!'
+            })
+        if len(tags_data) != len(set(tags_data)):
             raise serializers.ValidationError('Теги не могут повторяться!')
-        return tag_value
+        return data
 
     def create_ingredients(self, recipe, ingredients_data):
         recipe_ingredients = (
@@ -280,15 +281,9 @@ class RecipeSerializer(serializers.ModelSerializer):
             'cooking_time', instance.cooking_time)
 
         ingredients_data = validated_data.pop('recipe_ingredients', [])
-        if not ingredients_data:
-            raise serializers.ValidationError(
-                'Поле ингредиентов обязательно для заполнения!')
         instance.recipe_ingredients.all().delete()
         self.create_ingredients(instance, ingredients_data)
         tags_data = validated_data.pop('tags', [])
-        if not tags_data:
-            raise serializers.ValidationError(
-                'Поле тегов обязательно для заполения!')
         instance.tags.clear()
         self.create_tags(instance, tags_data)
 
@@ -309,18 +304,17 @@ class BaseRecipeActionSerializer(serializers.ModelSerializer):
 
     class Meta:
         fields = ('recipe', 'user')
-        read_only_fields = ('recipe', 'user')
 
     def validate(self, data):
         recipe_value = data.get('recipe')
         user = self.context.get('request').user
 
         if not Recipe.objects.filter(id=recipe_value.id).exists():
-            raise serializers.ValidationError('Данного рецепта не существует')
+            raise serializers.ValidationError('Данного рецепта не существует!')
 
         if self.Meta.model.objects.filter(user=user,
                                           recipe=recipe_value).exists():
-            raise serializers.ValidationError('Рецепт уже добавлен')
+            raise serializers.ValidationError('Рецепт уже добавлен.')
 
         return data
 
@@ -342,3 +336,15 @@ class ShoppingCartSerializer(BaseRecipeActionSerializer):
 
     class Meta(BaseRecipeActionSerializer.Meta):
         model = ShoppingCart
+
+
+class ShoppingCartDownloadSerializer(serializers.Serializer):
+    """Сериализатор скачивания Корзины покупок."""
+
+    user = serializers.PrimaryKeyRelatedField(queryset=User.objects.all())
+
+    def validate(self, shopping_cart_data):
+        user = self.context.get('request').user
+        if not ShoppingCart.objects.filter(user=user).exists():
+            raise serializers.ValidationError('Корзина покупок пуста')
+        return shopping_cart_data

@@ -5,7 +5,8 @@ from api.pagination import FoodgramPagination
 from api.permissions import IsAuthorOrReadOnly
 from api.serializers import (FavoriteSerializer, IngredientSerializer,
                              RecipeGetSerializer, RecipeSerializer,
-                             ShoppingCartSerializer, SubscriptionSerializer,
+                             ShoppingCartSerializer, ShoppingCartDownloadSerializer,
+                             SubscriptionSerializer,
                              TagSerializer)
 from django.contrib.auth import get_user_model
 from django.db.models import Sum
@@ -50,14 +51,6 @@ class RecipeViewSet(viewsets.ModelViewSet):
             return RecipeGetSerializer
         return RecipeSerializer
 
-    def get_serializer(self, *args, **kwargs):
-        if self.action == 'favorite':
-            return FavoriteSerializer(*args, **kwargs)
-        elif self.action == 'shopping_cart':
-            return ShoppingCartSerializer(*args, **kwargs)
-        else:
-            return super().get_serializer(*args, **kwargs)
-
     def perform_action(self, serializer_class, user, pk):
         serializer = serializer_class(
             data={'user': user.id, 'recipe': pk},
@@ -87,10 +80,11 @@ class RecipeViewSet(viewsets.ModelViewSet):
     @action(detail=False, methods=('get',),
             permission_classes=(permissions.IsAuthenticated,))
     def download_shopping_cart(self, request):
+        serializer = ShoppingCartDownloadSerializer(
+            data={'user': request.user.id},
+            context={'request': request})
+        serializer.is_valid(raise_exception=True)
         user = request.user
-        if not user.shopping_cart.exists():
-            return Response(status=status.HTTP_400_BAD_REQUEST)
-
         ingredients = RecipeIngredient.objects.filter(
             recipe__shopping_cart__user=request.user
         ).values(
