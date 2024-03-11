@@ -3,8 +3,10 @@ from datetime import datetime
 from api.filters import IngredientSearchFilter, RecipeFilter
 from api.pagination import FoodgramPagination
 from api.permissions import IsAuthorOrReadOnly
-from api.serializers import (FavoriteSerializer, IngredientSerializer,
-                             RecipeGetSerializer, RecipeSerializer,
+from api.serializers import (FavoriteSerializer,
+                             IngredientSerializer,
+                             RecipeGetSerializer,
+                             RecipeSerializer,
                              ShoppingCartDownloadSerializer,
                              ShoppingCartSerializer,
                              SubscriptionSerializer,
