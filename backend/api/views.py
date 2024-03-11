@@ -5,7 +5,8 @@ from api.pagination import FoodgramPagination
 from api.permissions import IsAuthorOrReadOnly
 from api.serializers import (FavoriteSerializer, IngredientSerializer,
                              RecipeGetSerializer, RecipeSerializer,
-                             ShoppingCartSerializer, ShoppingCartDownloadSerializer,
+                             ShoppingCartDownloadSerializer,
+                             ShoppingCartSerializer,
                              SubscriptionSerializer,
                              TagSerializer)
 from django.contrib.auth import get_user_model
