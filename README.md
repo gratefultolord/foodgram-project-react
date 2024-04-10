@@ -4,10 +4,7 @@
 Продуктовый помощник. Включает в себя функции создания рецептов, сохранения их в избранное, добавления в корзину покупок, которую можно скачать в формате txt. Также есть возможность подписки на других авторов.
 ***
 Адрес: ([https://fooddotgram.ddns.net](https://fooddotgram.ddns.net/recipes))
-### Суперпользователь
-login: acer-user123@mail.ru
 
-password: foodgram234
 ## Использованные технологии:
 [![Python](https://img.shields.io/badge/Python-3776AB?style=for-the-badge&logo=python&logoColor=white)]
 ![Django REST](https://img.shields.io/badge/DJANGO-REST-ff1709?style=for-the-badge&logo=django&logoColor=white&color=ff1709&labelColor=gray) 
